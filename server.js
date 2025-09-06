@@ -15,6 +15,10 @@ const OPENROUTER_API_KEY = "sk-or-v1-326a53ee02a49c0138b42972a54a30a678f4bea1ad1
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 // Proxy endpoint for Janitor AI to call
+app.get("/v1/test", async (req, res) => {
+  res.json({data: "Hello world!"})
+})
+
 app.post("/v1/chat/completions", async (req, res) => {
   try {
     // Log raw incoming request from Janitor AI
