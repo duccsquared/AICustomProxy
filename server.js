@@ -1,10 +1,12 @@
 import express from "express";
 import fetch from "node-fetch"; // if on Node 18+, global fetch is available
 import dotenv from "dotenv";
+import cors from "cors";
 
 dotenv.config();
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 // Your OpenRouter API key (keep secret!)
 // const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
