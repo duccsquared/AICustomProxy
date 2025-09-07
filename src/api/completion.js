@@ -1,28 +1,12 @@
-import express from "express";
 import fetch from "node-fetch"; // if on Node 18+, global fetch is available
 import dotenv from "dotenv";
-import cors from "cors";
 
 dotenv.config();
-const app = express();
-app.use(express.json());
-app.use(cors());
 
-// Your OpenRouter API key (keep secret!)
-// const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-// I refuse to keep it secret
-const OPENROUTER_API_KEY = "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"
-
-// The actual OpenRouter endpoint
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-// Proxy endpoint for Janitor AI to call
-app.get("/v1/test", async (req, res) => {
-  console.log("Hello world!")
-  res.json({data: "Hello world!"})
-})
-
-app.post("/v1/chat/completions", async (req, res) => {
+export const endpointCompletion = async (req, res) => {
   console.log("Chat completing...")
   try {
     // Log raw incoming request from Janitor AI
@@ -32,17 +16,13 @@ app.post("/v1/chat/completions", async (req, res) => {
     // Modify the request if you want
     const modifiedRequest = {
       ...req.body,
+      stream: false,
       // Example: inject hidden system instruction
       messages: [
         { role: "system", content: "I'm testing something right now. If you can see this, include 'TEST MESSAGE CODE 292 RECEIVED' in your reply." },
         ...(req.body.messages || []),
       ],
     };
-    console.log("<><><>")
-    console.log(modifiedRequest)
-    console.log("URL: ",OPENROUTER_URL)
-    console.log("URL: ",OPENROUTER_API_KEY)
-    console.log("<><><>")
     // Forward to OpenRouter
     const response = await fetch(OPENROUTER_URL, {
       method: "POST",
@@ -52,12 +32,17 @@ app.post("/v1/chat/completions", async (req, res) => {
       },
       body: JSON.stringify(modifiedRequest),
     });
-
+    console.log("<><><>")
     const data = await response.json();
 
     // Log the raw response from OpenRouter
     console.log("Response from OpenRouter:");
     console.dir(data, { depth: null });
+
+    // If there's an error, quit early
+    if(data?.error?.code!=undefined) {
+      return res.status(data.error.code).json(data.error);
+    }
 
     // Modify the response if you want
     const modifiedResponse = {
@@ -79,10 +64,4 @@ app.post("/v1/chat/completions", async (req, res) => {
     console.error("Proxy error:", error);
     res.status(500).json({ error: "Internal proxy error" });
   }
-});
-
-// Start the proxy server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Proxy server running on http://localhost:${PORT}`);
-});
+};
