@@ -41,6 +41,7 @@ app.post("/v1/chat/completions", async (req, res) => {
     console.log("<><><>")
     console.log(modifiedRequest)
     console.log("URL: ",OPENROUTER_URL)
+    console.log("URL: ",OPENROUTER_API_KEY)
     console.log("<><><>")
     // Forward to OpenRouter
     const response = await fetch(OPENROUTER_URL, {
