@@ -16,10 +16,12 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 // Proxy endpoint for Janitor AI to call
 app.get("/v1/test", async (req, res) => {
+  console.log("Hello world!")
   res.json({data: "Hello world!"})
 })
 
 app.post("/v1/chat/completions", async (req, res) => {
+  console.log("Chat completing...")
   try {
     // Log raw incoming request from Janitor AI
     console.log("Incoming request from Janitor AI:");
