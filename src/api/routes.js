@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { endpointTest } from "./test.js";
-import { endpointCompletion } from "./completion.js";
+import { endpointRPG } from "./rpg.js";
 const router = Router();
 
 router.get("/test", endpointTest);
-router.post("/chat/completions", endpointCompletion);
+router.post("/chat/rpg", endpointRPG);
 
 
 export default router;

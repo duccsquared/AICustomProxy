@@ -106,7 +106,7 @@ const modifyResponseMessage = (content) => {
     return finalLines.join("\n")
 }
 
-export const endpointCompletion = async (req, res) => {
+export const endpointRPG = async (req, res) => {
   console.log("Chat completing...")
   try {
     // Log raw incoming request from Janitor AI
@@ -120,7 +120,7 @@ export const endpointCompletion = async (req, res) => {
     };
     console.log("Modified Request:",modifiedRequest)
     // Forward to OpenRouter
-    const data = await callOpenRouter(modifiedRequest)
+    const data = await callOpenRouterMock(modifiedRequest)
 
     // Log the raw response from OpenRouter
     console.log("Response from OpenRouter:");
