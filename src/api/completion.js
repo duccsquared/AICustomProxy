@@ -1,6 +1,7 @@
 import fetch from "node-fetch"; // if on Node 18+, global fetch is available
 import dotenv from "dotenv";
 import { callOpenRouterMock, callOpenRouterMock2 } from "../mock/openrouter.js";
+import llamaTokenizer from "llama-tokenizer-js";
 dotenv.config();
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
@@ -19,19 +20,35 @@ const callOpenRouter = async (request) => {
   return await response.json();
 };
 
+const getWordCount = (strVal) => {
+  return strVal.split(' ').length
+}
+
+const getTokenCount = (strVal) => {
+  return llamaTokenizer.encode(strVal).length
+}
+
+const getWordTokenString = (message) => {
+  return `${message.tokens} tokens (${message.words} words) `
+}
+
+const getWordTokenStringSum = (messages,tokenFunc,wordFunc) => {
+  return `${messages.reduce((prev,curr)=>prev + tokenFunc(curr),0)} tokens (${messages.reduce((prev,curr)=>prev + wordFunc(curr),0)} words) `
+}
+
 const runStats = (command, messages) => {
+
+  messages.forEach((message) => {
+    message.words = getWordCount(message.content)
+    message.tokens = getTokenCount(message.content)
+  })
+
   const lines = [];
   lines.push(`message count: ${messages.length}`);
-  messages.sort((a, b) => a.content.length - b.content.length);
-  lines.push(`shortest message: ${messages[0].content.length} chars`);
-  lines.push(
-    `longest message: ${messages[messages.length - 1].content.length} chars`
-  );
-  lines.push(
-    `total length: ${messages.reduce(
-      (prev, curr) => prev + curr.content.length,
-      0
-    )} chars`
+  messages.sort((a, b) => a.tokens - b.tokens);
+  lines.push(`shortest message: ${getWordTokenString(messages[0])}`);
+  lines.push(`longest message: ${getWordTokenString(messages[messages.length - 1])}` );
+  lines.push(`total length: ${getWordTokenStringSum(messages,(message)=>message.tokens,(message)=>message.words)}`
   );
   return lines.join("\n");
 };
