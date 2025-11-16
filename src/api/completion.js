@@ -86,7 +86,8 @@ DEBUG: Create a brief, focused summary of the roleplay between {{char}} and {{us
 
 
 const addMemoryPrompt = (command,messages) => {
-  return [...messages,{role: "system", content: MEMORY_PROMPT}]
+  messages = messages.slice(0,messages.length-1)
+  return [...messages,{role: "user", content: MEMORY_PROMPT}]
 }
 
 const commands = [
