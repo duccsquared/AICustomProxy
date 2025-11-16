@@ -73,22 +73,41 @@ const runEcho = (command, messages) => {
   return JSON.stringify([messages[0],messages[messages.length-1]],undefined,2)
 }
 
-const modifyRequestMessages = (messages) => {
-  messages = [...messages];
+const MEMORY_PROMPT = `
+DEBUG: Create a brief, focused summary of the roleplay between {{char}} and {{user}} based on the chat history. Structure the summary as follows and do not include additional text outside the requested structure:
+1) plot: a set of 1 - 2 sentence long bullet points with each bullet point covering one major story beat.
+2) characters: important characters in the story. Each character should have 2 - 4 bullet points describing their personality, background, and relevant story events
+3) locations: important locations where story events took place. 2 - 4 bullet points per location.
+4) additional information: bullet points relevant for understanding important context behind the existing story that isn't covered in previous sections. leave empty if there is no extra information needed.
+`
+
+
+const addMemoryPrompt = (command,messages) => {
+  return [...messages,{role: "system", content: MEMORY_PROMPT}]
+}
+
+const commands = [
+  { name: "/stats", standard: false, func: runStats },
+  { name: "/echo", standard: false, func: runEcho },
+  { name: "/memory", standard: true, func: addMemoryPrompt, json: true }
+];
+
+const modifyRequestMessages = (messages,command) => {
+  // messages = [...messages];
+  if(command!=null) {
+    messages = command.func(command,messages)
+  }
   return messages;
 };
 
 // format: "abc"
-const modifyResponseMessage = (content) => {
+const modifyResponseMessage = (content,command) => {
   // const lines = content.split("\n");
   // return lines.join("\n");
   return content;
 };
 
-const commands = [
-  { name: "/stats", standard: false, func: runStats },
-  { name: "/echo", standard: false, func: runEcho }
-];
+
 
 const findCommand = (message) => {
   const lines = message.content.split("\n");
@@ -102,13 +121,13 @@ const findCommand = (message) => {
   return null;
 };
 
-const standardFlow = async (req, res) => {
+const standardFlow = async (req, res, command) => {
   console.log("Chat completing...");
   try {
     // Modify the request
     const modifiedRequest = {
       ...req.body,
-      messages: modifyRequestMessages(req.body.messages),
+      messages: modifyRequestMessages(req.body.messages, command),
     };
     console.log("Modified Request:", modifiedRequest);
     // Forward to OpenRouter
@@ -130,7 +149,7 @@ const standardFlow = async (req, res) => {
         ...choice,
         message: {
           ...choice.message,
-          content: modifyResponseMessage(choice.message.content),
+          content: modifyResponseMessage(choice.message.content, command),
         },
       })),
     };
@@ -162,7 +181,7 @@ export const endpointCompletion = async (req, res) => {
 
     let command = findCommand(req.body.messages[req.body.messages.length - 1]);
     if (command == null || command.standard) {
-      return standardFlow(req, res);
+      return standardFlow(req, res, command);
     } else {
       const result = {
         id: "command-" + Date.now(),
