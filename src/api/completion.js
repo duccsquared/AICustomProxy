@@ -43,6 +43,9 @@ const runStats = (command, messages) => {
     message.tokens = getTokenCount(message.content)
   })
 
+  // filter out empty user message (seems to appear sometimes for some reason)
+  messages = messages.filter((message) => !(message.role=="user" && message.content=="."))
+
   const lines = [];
   let firstMessageContent = messages.find((message) => message.role!="system").content 
 
