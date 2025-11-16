@@ -53,7 +53,7 @@ const runStats = (command, messages) => {
   lines.push(`longest: ${getWordTokenString(messages[messages.length - 1])}` );
   lines.push(`average: ${getWordTokenStringSum(messages,(prev,tokens,index)=>(prev*index+tokens)/(index+1),(prev,words,index)=>(prev*index+words)/(index+1))}`)
   lines.push(`total: ${getWordTokenStringSum(messages,(prev,tokens,index)=>prev+tokens,(prev,words,index)=>prev+words)}`);
-  lines.push(`oldest message: "${firstMessageContent.split(" ").slice(0,10).join(" ")}..."`)
+  lines.push(`oldest message: "${firstMessageContent.split(" ").slice(0,10).join(" ") ?? "N/A"}..."`)
   for(let messageType of ["system","assistant","user"]) {
     let filteredMessages = messages.filter((message)=>message.role==messageType)
     if(filteredMessages.length==0) continue;
@@ -69,6 +69,10 @@ const runStats = (command, messages) => {
   return lines.join("\n");
 };
 
+const runEcho = (command, messages) => {
+  return JSON.stringify([messages[0],messages[messages.length-1]],undefined,2)
+}
+
 const modifyRequestMessages = (messages) => {
   messages = [...messages];
   return messages;
@@ -81,7 +85,10 @@ const modifyResponseMessage = (content) => {
   return content;
 };
 
-const commands = [{ name: "/stats", standard: false, func: runStats }];
+const commands = [
+  { name: "/stats", standard: false, func: runStats },
+  { name: "/echo", standard: false, func: runEcho }
+];
 
 const findCommand = (message) => {
   const lines = message.content.split("\n");
