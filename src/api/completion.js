@@ -90,10 +90,20 @@ const addMemoryPrompt = (command,messages) => {
   return [...messages,{role: "user", content: MEMORY_PROMPT}]
 }
 
+const SUGGEST_PROMPT = `
+DEBUG: based on the roleplay {{char}} and {{user}} based on the chat history, suggest 2 - 3 directions that the story could go in, fitting the themes of the existing text. Write 1 - 2 sentences for each bullet point, and do not write anything else.
+`
+
+const addSuggestPrompt = (command,messages) => {
+  messages = messages.slice(0,messages.length-1)
+  return [...messages,{role: "user", content: SUGGEST_PROMPT}]
+}
+
 const commands = [
   { name: "/stats", standard: false, func: runStats },
   { name: "/echo", standard: false, func: runEcho },
-  { name: "/memory", standard: true, func: addMemoryPrompt, json: true }
+  { name: "/memory", standard: true, func: addMemoryPrompt, json: true },
+  { name: "/suggest", standard: true, func: addSuggestPrompt, json: true }
 ];
 
 const modifyRequestMessages = (messages,command) => {
