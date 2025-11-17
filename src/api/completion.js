@@ -77,11 +77,24 @@ const runEcho = (command, messages) => {
 }
 
 const MEMORY_PROMPT = `
-DEBUG: Create a brief, focused summary of the roleplay between {{char}} and {{user}} based on the chat history. Structure the summary as follows and do not include additional text outside the requested structure:
-1) plot: a set of 1 - 2 sentence long bullet points with each bullet point covering one major story beat.
-2) characters: important characters in the story. Each character should have 2 - 4 bullet points describing their personality, background, and relevant story events
-3) locations: important locations where story events took place. 2 - 4 bullet points per location.
-4) additional information: bullet points relevant for understanding important context behind the existing story that isn't covered in previous sections. leave empty if there is no extra information needed.
+DEBUG: Summarize the roleplay between {{char}} and {{user}} using only information explicitly present in the chat history.
+The summary must be concise, factual, and neutral.
+Follow this exact structure and do not include any text outside of it:
+1) plot:
+1-2 sentence bullet points.
+Each bullet describes one major story event or turning point.
+2) characters: 
+List each important character. For each character, include 2-4 concise bullet points covering:
+- personality traits
+- relevant background information
+- important actions or developments in the story (Only include characters who affect the story.)
+3) locations: 
+List each significant location. For each location, include 2-4 bullet points explaining:
+- what the location is
+- its relevance to the story
+- key events that happened there
+4) additional information:
+Bullet points for any context necessary to understand the RP that doesn't fit above (may be left empty).
 `
 
 
