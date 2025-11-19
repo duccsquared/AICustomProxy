@@ -77,8 +77,8 @@ const runEcho = (command, messages) => {
 }
 
 const MEMORY_PROMPT = `
-DEBUG: Summarize the roleplay between {{char}} and {{user}} using only information explicitly present in the chat history.
-The summary must be concise, factual, and neutral.
+DEBUG: Summarize the roleplay between {{char}} and {{user}} using information present in the chat history.
+The summary must be concise and factual.
 Follow this exact structure and do not include any text outside of it:
 1) plot:
 1-2 sentence bullet points.
