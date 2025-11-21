@@ -21,60 +21,116 @@ const callOpenRouter = async (request) => {
 };
 
 const getWordCount = (strVal) => {
-  return strVal.split(' ').length
-}
+  return strVal.split(" ").length;
+};
 
 const getTokenCount = (strVal) => {
-  return llamaTokenizer.encode(strVal).length
-}
+  return llamaTokenizer.encode(strVal).length;
+};
 
 const getWordTokenString = (message) => {
-  return `${message.tokens} tokens (${message.words} words) `
-}
+  return `${message.tokens} tokens (${message.words} words) `;
+};
 
-const getWordTokenStringSum = (messages,tokenFunc,wordFunc) => {
-  return `${Math.round(messages.reduce((prev,curr,index)=>tokenFunc(prev,curr.tokens,index),0))} tokens (${Math.round(messages.reduce((prev,curr,index)=>wordFunc(prev,curr.words,index),0))} words) `
-}
+const getWordTokenStringSum = (messages, tokenFunc, wordFunc) => {
+  return `${Math.round(
+    messages.reduce(
+      (prev, curr, index) => tokenFunc(prev, curr.tokens, index),
+      0
+    )
+  )} tokens (${Math.round(
+    messages.reduce((prev, curr, index) => wordFunc(prev, curr.words, index), 0)
+  )} words) `;
+};
 
-const runStats = (command, messages) => {
-
+const runStats = (command, messages, argString) => {
   messages.forEach((message) => {
-    message.words = getWordCount(message.content)
-    message.tokens = getTokenCount(message.content)
-  })
+    message.words = getWordCount(message.content);
+    message.tokens = getTokenCount(message.content);
+  });
 
   // filter out empty user message (seems to appear sometimes for some reason)
-  messages = messages.filter((message) => !(message.role=="user" && message.content=="."))
+  messages = messages.filter(
+    (message) => !(message.role == "user" && message.content == ".")
+  );
 
   const lines = [];
-  let firstMessageContent = messages.find((message) => message.role!="system").content 
+  let firstMessageContent = messages.find(
+    (message) => message.role != "system"
+  ).content;
 
-  lines.push(`---- overall ----`)
+  lines.push(`---- overall ----`);
   lines.push(`message count: ${messages.length}`);
   messages.sort((a, b) => a.tokens - b.tokens);
   lines.push(`shortest: ${getWordTokenString(messages[0])}`);
-  lines.push(`longest: ${getWordTokenString(messages[messages.length - 1])}` );
-  lines.push(`average: ${getWordTokenStringSum(messages,(prev,tokens,index)=>(prev*index+tokens)/(index+1),(prev,words,index)=>(prev*index+words)/(index+1))}`)
-  lines.push(`total: ${getWordTokenStringSum(messages,(prev,tokens,index)=>prev+tokens,(prev,words,index)=>prev+words)}`);
-  lines.push(`oldest message: "${firstMessageContent.split(" ").slice(0,10).join(" ") ?? "N/A"}..."`)
-  for(let messageType of ["system","assistant","user"]) {
-    let filteredMessages = messages.filter((message)=>message.role==messageType)
-    if(filteredMessages.length==0) continue;
-    lines.push(`\n---- ${messageType} ----`)
+  lines.push(`longest: ${getWordTokenString(messages[messages.length - 1])}`);
+  lines.push(
+    `average: ${getWordTokenStringSum(
+      messages,
+      (prev, tokens, index) => (prev * index + tokens) / (index + 1),
+      (prev, words, index) => (prev * index + words) / (index + 1)
+    )}`
+  );
+  lines.push(
+    `total: ${getWordTokenStringSum(
+      messages,
+      (prev, tokens, index) => prev + tokens,
+      (prev, words, index) => prev + words
+    )}`
+  );
+  lines.push(
+    `oldest message: "${
+      firstMessageContent.split(" ").slice(0, 10).join(" ") ?? "N/A"
+    }..."`
+  );
+  for (let messageType of ["system", "assistant", "user"]) {
+    let filteredMessages = messages.filter(
+      (message) => message.role == messageType
+    );
+    if (filteredMessages.length == 0) continue;
+    lines.push(`\n---- ${messageType} ----`);
     lines.push(`message count: ${filteredMessages.length}`);
     filteredMessages.sort((a, b) => a.tokens - b.tokens);
     lines.push(`shortest: ${getWordTokenString(filteredMessages[0])}`);
-    lines.push(`longest: ${getWordTokenString(filteredMessages[filteredMessages.length - 1])}` );
-    lines.push(`average: ${getWordTokenStringSum(filteredMessages,(prev,tokens,index)=>(prev*index+tokens)/(index+1),(prev,words,index)=>(prev*index+words)/(index+1))}`)
-    lines.push(`total: ${getWordTokenStringSum(filteredMessages,(prev,tokens,index)=>prev+tokens,(prev,words,index)=>prev+words)}`);
+    lines.push(
+      `longest: ${getWordTokenString(
+        filteredMessages[filteredMessages.length - 1]
+      )}`
+    );
+    lines.push(
+      `average: ${getWordTokenStringSum(
+        filteredMessages,
+        (prev, tokens, index) => (prev * index + tokens) / (index + 1),
+        (prev, words, index) => (prev * index + words) / (index + 1)
+      )}`
+    );
+    lines.push(
+      `total: ${getWordTokenStringSum(
+        filteredMessages,
+        (prev, tokens, index) => prev + tokens,
+        (prev, words, index) => prev + words
+      )}`
+    );
   }
 
   return lines.join("\n");
 };
 
-const runEcho = (command, messages) => {
-  return JSON.stringify([messages[0],messages[messages.length-1]],undefined,2)
-}
+const runEcho = (command, messages, argString) => {
+  if (parseInt(argString) != NaN) {
+    return JSON.stringify(
+      messages.slice(messages.length - parseInt(argString)),
+      undefined,
+      2
+    );
+  } else {
+    return JSON.stringify(
+      [messages[0], messages[messages.length - 1]],
+      undefined,
+      2
+    );
+  }
+};
 
 const MEMORY_PROMPT = `
 DEBUG: Summarize the roleplay between {{char}} and {{user}} using information present in the chat history.
@@ -95,53 +151,52 @@ List each significant location. For each location, include 2-4 bullet points exp
 - key events that happened there
 4) additional information:
 Bullet points for any context necessary to understand the RP that doesn't fit above (may be left empty).
-`
+`;
 
-
-const addMemoryPrompt = (command,messages) => {
-  messages = messages.slice(0,messages.length-1)
-  return [...messages,{role: "user", content: MEMORY_PROMPT}]
-}
+const addMemoryPrompt = (command, messages, argString) => {
+  messages = messages.slice(0, messages.length - 1);
+  return [...messages, { role: "user", content: MEMORY_PROMPT }];
+};
 
 const SUGGEST_PROMPT = `
 DEBUG: based on the roleplay {{char}} and {{user}} based on the chat history, suggest 2 - 3 directions that the story could go in, fitting the themes of the existing text. Write 1 - 2 sentences for each bullet point, and do not write anything else.
-`
+`;
 
-const addSuggestPrompt = (command,messages) => {
-  messages = messages.slice(0,messages.length-1)
-  return [...messages,{role: "user", content: SUGGEST_PROMPT}]
-}
+const addSuggestPrompt = (command, messages, argString) => {
+  messages = messages.slice(0, messages.length - 1);
+  return [...messages, { role: "user", content: SUGGEST_PROMPT }];
+};
 
 const commands = [
   { name: "/stats", standard: false, func: runStats },
   { name: "/echo", standard: false, func: runEcho },
   { name: "/memory", standard: true, func: addMemoryPrompt, json: true },
-  { name: "/suggest", standard: true, func: addSuggestPrompt, json: true }
+  { name: "/suggest", standard: true, func: addSuggestPrompt, json: true },
 ];
 
-const modifyRequestMessages = (messages,command) => {
+const modifyRequestMessages = (messages, command) => {
   // messages = [...messages];
-  if(command!=null) {
-    messages = command.func(command,messages)
+  if (command != null) {
+    messages = command.func(command, messages);
   }
   return messages;
 };
 
 // format: "abc"
-const modifyResponseMessage = (content,command) => {
+const modifyResponseMessage = (content, command) => {
   // const lines = content.split("\n");
   // return lines.join("\n");
   return content;
 };
-
-
 
 const findCommand = (message) => {
   const lines = message.content.split("\n");
   for (let line of lines) {
     for (let command of commands) {
       if (line.includes(command.name)) {
-        return command;
+        let splitLine = lines.split(command.name);
+        let argString = splitLine[splitLine.length - 1];
+        return command, argString;
       }
     }
   }
@@ -206,9 +261,10 @@ export const endpointCompletion = async (req, res) => {
     console.log("Incoming request from Janitor AI:");
     console.dir(req.body, { depth: null });
 
-    let command = findCommand(req.body.messages[req.body.messages.length - 1]);
+    let command,
+      argString = findCommand(req.body.messages[req.body.messages.length - 1]);
     if (command == null || command.standard) {
-      return standardFlow(req, res, command);
+      return standardFlow(req, res, command, argString);
     } else {
       const result = {
         id: "command-" + Date.now(),
@@ -216,12 +272,16 @@ export const endpointCompletion = async (req, res) => {
         provider: "Chutes",
         model: req.body.model,
         choices: [
-          { 
+          {
             logprobs: null,
             finish_reason: "stop",
             native_finish_reason: "stop",
             index: 0,
-            message: { role: "assistant", content: command.func(command, req.body.messages) } },
+            message: {
+              role: "assistant",
+              content: command.func(command, req.body.messages, argString),
+            },
+          },
         ],
       };
       res.json(result);
